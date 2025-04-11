@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صقر - مساعدك الذكي المتطور</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+        :root {
+            --primary-color: #0a0c10; /* Deeper dark */
+            --secondary-color: #161b22;
+            --accent-color-1: #2ea043; /* Vibrant Green */
+            --accent-color-2: #388bfd; /* Vibrant Blue */
+            --text-color: #e6edf3; /* Lighter text */
+            --text-color-darker: #8b949e;
+            --border-color: #21262d;
+            --input-bg: #010409;
+            --user-bubble-bg: linear-gradient(135deg, #1f6feb, #388bfd); /* User gradient */
+            --ai-bubble-bg: linear-gradient(135deg, #2d333b, #373e47); /* AI gradient */
+            --button-bg: linear-gradient(135deg, var(--accent-color-1), #56d364);
+            --button-hover-bg: linear-gradient(135deg, #56d364, var(--accent-color-1));
+            --code-bg: rgba(100, 110, 125, 0.2);
+            --error-bg: rgba(248, 81, 73, 0.1);
+            --error-border: #f85149;
+            --error-text: #ff9999;
+            --font-family: 'Cairo', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, var(--primary-color), var(--secondary-color), #0d1117, #21262d);
+            background-size: 400% 400%;
+            animation: gradientBG 18s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #chat-container {
+            width: 95%;
+            max-width: 850px; /* Slightly wider */
+            height: 95vh;   /* Slightly taller */
+            background-color: rgba(1, 4, 9, 0.8); /* Darker, more transparent */
+            backdrop-filter: blur(15px) saturate(120%); /* Enhanced glass effect */
+            border: 1px solid var(--border-color);
+            border-radius: 20px; /* Smoother corners */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5); /* Deeper shadow */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            transform: perspective(1200px) rotateX(0.5deg);
+            transition: transform 0.4s ease-out;
+        }
+
+        #chat-container:hover {
+            transform: perspective(1200px) rotateX(0deg) scale(1.01);
+        }
+
+        #chat-header {
+            padding: 18px 25px;
+            background: linear-gradient(to bottom, rgba(33, 38, 45, 0.9), rgba(33, 38, 45, 0.6));
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.6);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px; /* Space between icon and text */
+        }
+
+        #header-icon {
+            width: 30px;
+            height: 30px;
+            fill: var(--accent-color-2); /* Use accent color */
+            animation: pulseIcon 2.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseIcon {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+
+        #chat-history {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px; /* Increased gap */
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color-2) var(--secondary-color);
+        }
+
+        #chat-history::-webkit-scrollbar { width: 8px; }
+        #chat-history::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+        #chat-history::-webkit-scrollbar-thumb { background-color: var(--accent-color-2); border-radius: 10px; border: 2px solid var(--secondary-color); }
+        #chat-history::-webkit-scrollbar-thumb:hover { background-color: #58a6ff; }
+
+        .message {
+            max-width: 80%; /* Slightly wider max */
+            padding: 14px 20px;
+            border-radius: 22px; /* Smoother bubble */
+            line-height: 1.6; /* Improved readability */
+            position: relative;
+            animation: messageFadeSlideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; /* Smoother animation */
+            word-wrap: break-word;
+            opacity: 0; /* Start hidden for animation */
+        }
+
+        @keyframes messageFadeSlideIn {
+            from { opacity: 0; transform: translateY(15px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .user-message {
+            background: var(--user-bubble-bg);
+            color: #fff;
+            border-bottom-right-radius: 8px;
+            margin-right: auto;
+            align-self: flex-end;
+            box-shadow: 0 5px 15px rgba(56, 139, 253, 0.35);
+            transition: transform 0.2s ease-out;
+        }
+         .user-message:hover {
+             transform: scale(1.02);
+         }
+
+        .ai-message {
+            background: var(--ai-bubble-bg);
+            color: var(--text-color);
+            border-bottom-left-radius: 8px;
+            margin-left: auto;
+            align-self: flex-start;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+            position: relative;
+            padding-left: 55px; /* More space for icon */
+        }
+
+        .ai-message::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background-color: var(--secondary-color); /* Match icon background */
+            /* Use mask for SVG icon */
+            -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 2.489c-5.88 0-7.388.03-9.898 1.483-.94.547-1.604 1.21-2.15 2.15C-.534 8.61.012 10.118.012 16s.03 7.388 1.483 9.898c.547.94 1.21 1.604 2.15 2.15 2.488 1.454 4.018 1.483 9.898 1.483 5.88 0 7.388-.03 9.898-1.483.94-.547 1.604-1.21 2.15-2.15 1.454-2.488 1.483-4.018 1.483-9.898s-.03-7.388-1.483-9.898c-.547-.94-1.21-1.604-2.15-2.15C19.39.046 17.88.016 12.001.016L12.001 2.489zm0 1.965c5.762 0 6.096.022 8.257.12.88.04 1.378.198 1.77.35.496.19.835.45 1.173.788.338.338.598.677.788 1.173.152.392.31.89.35 1.77.098 2.16.12 2.495.12 8.257s-.022 6.096-.12 8.257c-.04.88-.198 1.378-.35 1.77-.19.496-.45.835-.788 1.173-.338.338-.677.598-1.173.788-.392.152-.89.31-1.77.35-2.16.098-2.495.12-8.257.12s-6.096-.022-8.257-.12c-.88-.04-1.378-.198-1.77-.35-.496-.19-.835-.45-1.173-.788-.338-.338-.598-.677-.788-1.173-.152-.392-.31-.89-.35-1.77-.098-2.16-.12-2.495-.12-8.257s.022-6.096.12-8.257c.04-.88.198-1.378.35-1.77.19-.496.45-.835.788-1.173.338-.338.677-.598 1.173-.788.392-.152.89-.31 1.77-.35 2.16-.098 2.495-.12 8.257-.12zm-1.99 4.72a.75.75 0 0 0-1.06 1.06l3.24 3.24H7.75a.75.75 0 1 0 0 1.5h6.43l-3.24 3.24a.75.75 0 1 0 1.06 1.06l4.5-4.5a.75.75 0 0 0 0-1.06l-4.5-4.5z"></path></svg>');
+            mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 2.489c-5.88 0-7.388.03-9.898 1.483-.94.547-1.604 1.21-2.15 2.15C-.534 8.61.012 10.118.012 16s.03 7.388 1.483 9.898c.547.94 1.21 1.604 2.15 2.15 2.488 1.454 4.018 1.483 9.898 1.483 5.88 0 7.388-.03 9.898-1.483.94-.547 1.604-1.21 2.15-2.15 1.454-2.488 1.483-4.018 1.483-9.898s-.03-7.388-1.483-9.898c-.547-.94-1.21-1.604-2.15-2.15C19.39.046 17.88.016 12.001.016L12.001 2.489zm0 1.965c5.762 0 6.096.022 8.257.12.88.04 1.378.198 1.77.35.496.19.835.45 1.173.788.338.338.598.677.788 1.173.152.392.31.89.35 1.77.098 2.16.12 2.495.12 8.257s-.022 6.096-.12 8.257c-.04.88-.198 1.378-.35 1.77-.19.496-.45.835-.788 1.173-.338.338-.677.598-1.173.788-.392.152-.89.31-1.77.35-2.16.098-2.495.12-8.257.12s-6.096-.022-8.257-.12c-.88-.04-1.378-.198-1.77-.35-.496-.19-.835-.45-1.173-.788-.338-.338-.598-.677-.788-1.173-.152-.392-.31-.89-.35-1.77-.098-2.16-.12-2.495-.12-8.257s.022-6.096.12-8.257c.04-.88.198 1.378.35-1.77.19-.496.45-.835.788-1.173.338-.338.677-.598 1.173-.788.392-.152.89-.31 1.77-.35 2.16-.098 2.495-.12 8.257-.12zm-1.99 4.72a.75.75 0 0 0-1.06 1.06l3.24 3.24H7.75a.75.75 0 1 0 0 1.5h6.43l-3.24 3.24a.75.75 0 1 0 1.06 1.06l4.5-4.5a.75.75 0 0 0 0-1.06l-4.5-4.5z"></path></svg>');
+            background-color: var(--accent-color-1); /* Icon color */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(46, 160, 67, 0.5);
+            font-size: 1em;
+        }
+
+        /* Styling for code blocks */
+        .ai-message pre {
+            background-color: var(--code-bg);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto; /* Allow horizontal scroll for long code */
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .ai-message code {
+            font-family: 'Courier New', Courier, monospace; /* Monospace font */
+            font-size: 0.9em;
+            color: var(--text-color); /* Match text color or make slightly different */
+            background-color: transparent !important; /* Override potential inline styles */
+            padding: 0 !important;
+        }
+        .ai-message pre code {
+            display: block; /* Ensure block display inside pre */
+            background-color: transparent !important;
+            padding: 0 !important;
+        }
+         /* Inline code */
+        .ai-message p > code, .ai-message li > code {
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        /* Typing Indicator styling */
+        #typing-indicator-container {
+             display: none; /* Hidden by default */
+             padding: 0 25px; /* Match chat history padding */
+             align-self: flex-start; /* Align left */
+             margin-left: auto;
+             width: fit-content; /* Take only needed width */
+             margin-bottom: 10px; /* Space below indicator */
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px; /* More padding */
+            padding-left: 55px; /* Align with AI message icon */
+            background: var(--ai-bubble-bg); /* Use AI bubble style */
+            border-radius: 22px;
+            border-bottom-left-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+        /* Use the same icon method as AI messages */
+        .typing-indicator::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background-color: var(--secondary-color);
+            -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 2.489c-5.88 0-7.388.03-9.898 1.483-.94.547-1.604 1.21-2.15 2.15C-.534 8.61.012 10.118.012 16s.03 7.388 1.483 9.898c.547.94 1.21 1.604 2.15 2.15 2.488 1.454 4.018 1.483 9.898 1.483 5.88 0 7.388-.03 9.898-1.483.94-.547 1.604-1.21 2.15-2.15 1.454-2.488 1.483-4.018 1.483-9.898s-.03-7.388-1.483-9.898c-.547-.94-1.21-1.604-2.15-2.15C19.39.046 17.88.016 12.001.016L12.001 2.489zm0 1.965c5.762 0 6.096.022 8.257.12.88.04 1.378.198 1.77.35.496.19.835.45 1.173.788.338.338.598.677.788 1.173.152.392.31.89.35 1.77.098 2.16.12 2.495.12 8.257s-.022 6.096-.12 8.257c-.04.88-.198 1.378-.35 1.77-.19.496-.45.835-.788 1.173-.338.338-.677.598-1.173.788-.392.152-.89.31-1.77.35-2.16.098-2.495.12-8.257.12s-6.096-.022-8.257-.12c-.88-.04-1.378-.198-1.77-.35-.496-.19-.835-.45-1.173-.788-.338.338-.598-.677-.788-1.173-.152-.392-.31-.89-.35-1.77-.098-2.16-.12-2.495-.12-8.257s.022-6.096.12-8.257c.04-.88.198 1.378.35-1.77.19-.496.45-.835.788-1.173.338.338.677.598 1.173-.788.392-.152.89-.31 1.77-.35 2.16-.098 2.495-.12 8.257-.12zm-1.99 4.72a.75.75 0 0 0-1.06 1.06l3.24 3.24H7.75a.75.75 0 1 0 0 1.5h6.43l-3.24 3.24a.75.75 0 1 0 1.06 1.06l4.5-4.5a.75.75 0 0 0 0-1.06l-4.5-4.5z"></path></svg>');
+            mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 2.489c-5.88 0-7.388.03-9.898 1.483-.94.547-1.604 1.21-2.15 2.15C-.534 8.61.012 10.118.012 16s.03 7.388 1.483 9.898c.547.94 1.21 1.604 2.15 2.15 2.488 1.454 4.018 1.483 9.898 1.483 5.88 0 7.388-.03 9.898-1.483.94-.547 1.604-1.21 2.15-2.15 1.454-2.488 1.483-4.018 1.483-9.898s-.03-7.388-1.483-9.898c-.547-.94-1.21-1.604-2.15-2.15C19.39.046 17.88.016 12.001.016L12.001 2.489zm0 1.965c5.762 0 6.096.022 8.257.12.88.04 1.378.198 1.77.35.496.19.835.45 1.173.788.338.338.598.677.788 1.173.152.392.31.89.35 1.77.098 2.16.12 2.495.12 8.257s-.022 6.096-.12 8.257c-.04.88-.198 1.378-.35 1.77-.19.496-.45.835-.788 1.173-.338.338-.677.598-1.173.788-.392.152-.89.31-1.77.35-2.16.098-2.495.12-8.257.12s-6.096-.022-8.257-.12c-.88-.04-1.378-.198-1.77-.35-.496-.19-.835-.45-1.173-.788-.338.338-.598-.677-.788-1.173-.152-.392-.31-.89-.35-1.77-.098-2.16-.12-2.495-.12-8.257s.022-6.096.12-8.257c.04-.88.198 1.378.35-1.77.19-.496.45-.835.788-1.173.338.338.677.598 1.173-.788.392-.152.89-.31 1.77-.35 2.16-.098 2.495-.12 8.257-.12zm-1.99 4.72a.75.75 0 0 0-1.06 1.06l3.24 3.24H7.75a.75.75 0 1 0 0 1.5h6.43l-3.24 3.24a.75.75 0 1 0 1.06 1.06l4.5-4.5a.75.75 0 0 0 0-1.06l-4.5-4.5z"></path></svg>');
+            background-color: var(--accent-color-1);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(46, 160, 67, 0.5);
+        }
+
+
+        .typing-indicator span {
+            height: 9px; /* Slightly larger dots */
+            width: 9px;
+            background-color: var(--text-color-darker);
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 3px; /* Increased spacing */
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        #input-area {
+            display: flex;
+            padding: 15px 20px; /* Adjusted padding */
+            border-top: 1px solid var(--border-color);
+            background-color: rgba(1, 4, 9, 0.85); /* Match container bg */
+            position: relative;
+        }
+
+        #message-input {
+            flex-grow: 1;
+            padding: 14px 20px; /* More padding */
+            border: 1px solid var(--border-color);
+            border-radius: 30px; /* More rounded */
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            font-size: 1.05em; /* Slightly larger font */
+            margin-left: 12px;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+
+        #message-input:focus {
+            background-color: #0d1117; /* Slightly lighter on focus */
+            border-color: var(--accent-color-2);
+            box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.3); /* Focus ring */
+        }
+
+        #send-button {
+            padding: 0 22px; /* Padding adjusted for icon */
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 30px; /* Match input */
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-weight: 700;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease, transform 0.15s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);
+        }
+
+        #send-button:hover {
+            background: var(--button-hover-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(46, 160, 67, 0.5);
+        }
+        #send-button:active {
+             transform: translateY(0px) scale(0.98); /* Click feedback */
+             box-shadow: 0 2px 8px rgba(46, 160, 67, 0.3);
+         }
+
+        #send-button svg {
+            width: 20px; /* Slightly larger icon */
+            height: 20px;
+            fill: white;
+            transition: transform 0.3s ease;
+        }
+         #send-button:hover svg {
+             transform: rotate(10deg) scale(1.1); /* Subtle icon animation */
+         }
+
+        /* Error Message Style */
+        .error-message {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid var(--error-border);
+            align-self: center;
+            margin: 10px auto; /* More vertical margin */
+            border-radius: 10px;
+            font-size: 0.95em;
+            padding: 10px 15px; /* Add padding */
+            max-width: 90%; /* Ensure it doesn't get too wide */
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(248, 81, 73, 0.2);
+        }
+
+         /* Welcome Message Style */
+        .welcome-message {
+            align-self: center;
+            text-align: center;
+            color: var(--text-color-darker);
+            font-size: 1em; /* Slightly larger */
+            margin-top: 20px;
+            margin-bottom: 10px; /* Added bottom margin */
+            padding: 15px 20px;
+            background: rgba(33, 38, 45, 0.4); /* Subtle background */
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 80%;
+            justify-content: center;
+        }
+         .welcome-message svg {
+             width: 24px;
+             height: 24px;
+             fill: var(--accent-color-1); /* Green falcon */
+             opacity: 0.8;
+         }
+
+        /* Responsive adjustments */
+        @media (max-width: 700px) {
+            #chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+            #chat-header { font-size: 1.3em; padding: 15px 20px; }
+            #header-icon { width: 26px; height: 26px; }
+            #chat-history { padding: 15px; gap: 15px; }
+            .message { max-width: 88%; padding: 12px 18px; }
+            .ai-message { padding-left: 50px; } /* Adjust icon spacing */
+             .ai-message::before { left: 10px; width: 26px; height: 26px; }
+             .typing-indicator { padding-left: 50px; }
+             .typing-indicator::before { left: 10px; width: 26px; height: 26px; }
+            #input-area { padding: 10px 15px; }
+            #message-input { padding: 12px 18px; font-size: 1em; 
