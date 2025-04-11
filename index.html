@@ -472,8 +472,8 @@
         // Anyone can view this key in your page's source code and use it at your expense.
         // In a real application, the API should be called via a backend server that keeps the key secret.
         //
-        const API_KEY = "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"; // <--- تحذير: المفتاح مكشوف هنا! WARNING: Key exposed here!
-        const API_URL = "https://api.openai.com/v1/chat/completions"; // Using OpenAI compatible endpoint
+        const API_KEY = "AIzaSyBfDIDoz6cirXWwtmqBSgrvbq_lnVMxrBg" // <--- تحذير: المفتاح مكشوف هنا! WARNING: Key exposed here!
+        const API_URL =  `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`; // Using OpenAI compatible endpoint
 
         let conversationHistory = [
             { role: "system", content: "أنت مساعد ذكاء اصطناعي مفيد ومتعاون اسمك صقر. أجب دائما باللغة العربية وبأسلوب عصري، ودود، ومحترف قليلاً. استخدم الرموز التعبيرية باعتدال عند الاقتضاء." } // Refined system prompt
