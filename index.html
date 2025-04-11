@@ -391,4 +391,274 @@
              .typing-indicator { padding-left: 50px; }
              .typing-indicator::before { left: 10px; width: 26px; height: 26px; }
             #input-area { padding: 10px 15px; }
-            #message-input { padding: 12px 18px; font-size: 1em; 
+            #message-input { padding: 12px 18px; font-size: 1em; }
+            #send-button { padding: 0 18px; }
+            #send-button svg { width: 18px; height: 18px; }
+             .welcome-message { max-width: 90%; font-size: 0.95em; }
+        }
+
+        /* Shake animation (for empty input attempt) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+            20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+        .shake-animation {
+            animation: shake 0.4s ease-in-out;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Falcon Icon SVG (Inline for easy use with mask) -->
+    <svg width="0" height="0" style="position:absolute;">
+      <symbol id="falcon-icon" viewBox="0 0 24 24" fill="currentColor">
+        <!-- Simple Falcon/Eagle Head - Replace with a better one if available -->
+         <path d="M19.13 6.37a7.49 7.49 0 0 0-10.26 0l-1.01 1.01a1 1 0 0 0-.21 1.09c.13.4.39.75.75 1.01l2.81 2.8-4.24 4.25a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l4.24-4.24 2.81 2.8a1.66 1.66 0 0 0 1.08.42c.43 0 .84-.17 1.14-.48l1.01-1.01a7.49 7.49 0 0 0 0-10.26zm-1.41 8.85-1.12-1.12a1 1 0 0 0-1.42 0l-.7.7a1 1 0 0 1-1.42 0l-.71-.71a1 1 0 0 0-1.41 0l-1.12 1.12-2.12-2.12 4.24-4.24a.99.99 0 0 0 .43-1.08 1 1 0 0 0-.49-.81l-1.01-1.01a5.49 5.49 0 0 1 7.78 0l1.01 1.01a1 1 0 0 0 .76 1.62 1 1 0 0 0 .7-.29l4.24-4.24 2.12 2.12-4.24 4.24z"/>
+         <!-- Alternative Simpler path for Saqr (like a stylized S or bird) -->
+         <!-- <path d="M17.5 3c-2.48 0-4.5 2.02-4.5 4.5 0 1.04.36 2 .95 2.78L5.77 18.45c-.4.4-.4 1.04 0 1.44s1.04.4 1.44 0L15.38 11.7c.78.6 1.74.95 2.78.95 2.48 0 4.5-2.02 4.5-4.5S19.98 3 17.5 3zm0 7c-1.38 0-2.5-1.12-2.5-2.5S16.12 5 17.5 5s2.5 1.12 2.5 2.5S18.88 10 17.5 10z"/> -->
+      </symbol>
+       <!-- Send Icon -->
+      <symbol id="send-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405Z"></path>
+      </symbol>
+    </svg>
+
+    <div id="chat-container">
+        <div id="chat-header">
+             <!-- Using the inline SVG symbol -->
+             <svg id="header-icon" viewBox="0 0 24 24"><use href="#falcon-icon"></use></svg>
+             صقر - مساعدك الذكي
+        </div>
+        <div id="chat-history">
+           <!-- Welcome Message -->
+            <div class="welcome-message">
+                 <svg viewBox="0 0 24 24"><use href="#falcon-icon"></use></svg>
+                <span>مرحباً بك! أنا صقر، مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟</span>
+            </div>
+           <!-- Chat messages will appear here -->
+        </div>
+         <!-- Typing Indicator Structure (moved out of flow, controlled by JS) -->
+         <div id="typing-indicator-container">
+             <div class="typing-indicator">
+                 <!-- The ::before pseudo-element will show the icon -->
+                 <span></span><span></span><span></span>
+             </div>
+         </div>
+        <div id="input-area">
+            <input type="text" id="message-input" placeholder="اكتب رسالتك هنا..." autocomplete="off">
+            <button id="send-button" title="إرسال">
+                <svg viewBox="0 0 24 24"><use href="#send-icon"></use></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatHistory = document.getElementById('chat-history');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicatorContainer = document.getElementById('typing-indicator-container');
+
+        // --- !!! تحذير أمني هام جداً !!! ---
+        // --- !!! VERY IMPORTANT SECURITY WARNING !!! ---
+        //
+        // لا تضع مفتاح API الخاص بك مباشرة في كود الواجهة الأمامية (JavaScript في المتصفح) لتطبيق حقيقي.
+        // هذا الكود يضع المفتاح هنا فقط لأغراض العرض التوضيحي وبناءً على طلب ملف واحد.
+        // أي شخص يمكنه رؤية هذا المفتاح في كود المصدر لصفحتك واستخدامه على نفقتك.
+        // في تطبيق حقيقي، يجب أن يتم استدعاء API من خلال خادم خلفي (backend server) يحافظ على سرية المفتاح.
+        //
+        // DO NOT put your API key directly into frontend code (JavaScript in the browser) for a real application.
+        // This code includes the key here ONLY for demonstration purposes and the single-file requirement.
+        // Anyone can view this key in your page's source code and use it at your expense.
+        // In a real application, the API should be called via a backend server that keeps the key secret.
+        //
+        const API_KEY = "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"; // <--- تحذير: المفتاح مكشوف هنا! WARNING: Key exposed here!
+        const API_URL = "https://api.openai.com/v1/chat/completions"; // Using OpenAI compatible endpoint
+
+        let conversationHistory = [
+            { role: "system", content: "أنت مساعد ذكاء اصطناعي مفيد ومتعاون اسمك صقر. أجب دائما باللغة العربية وبأسلوب عصري، ودود، ومحترف قليلاً. استخدم الرموز التعبيرية باعتدال عند الاقتضاء." } // Refined system prompt
+        ];
+
+        // Function to scroll chat history to the bottom
+        function scrollToBottom() {
+             // Use timeout to ensure DOM has updated after adding message/indicator
+            setTimeout(() => {
+                chatHistory.scrollTo({ top: chatHistory.scrollHeight, behavior: 'smooth' });
+            }, 50); // Small delay
+        }
+
+        // Function to add a message to the chat display
+        function displayMessage(sender, text) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+
+            if (sender === 'user') {
+                messageElement.classList.add('user-message');
+                messageElement.textContent = text; // Use textContent for user input for security
+            } else if (sender === 'ai') {
+                messageElement.classList.add('ai-message');
+                // Basic markdown support (Bold, Italic, Strikethrough, Inline Code, Code Blocks)
+                // Order matters here: Process blocks first, then inline elements
+                text = text.replace(/```([\s\S]*?)```/g, (match, code) => {
+                    // Basic syntax highlighting simulation (can be expanded)
+                    code = code.replace(/^\s*\n/, ''); // Remove leading newline if any
+                    code = code.replace(/</g, '<').replace(/>/g, '>'); // Escape HTML
+                    // Add more replacements for basic keywords, strings, comments if desired
+                    return `<pre><code>${code}</code></pre>`;
+                 });
+                text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+                text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');       // Italic
+                text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');     // Strikethrough
+                text = text.replace(/`([^`]+)`/g, '<code>$1</code>'); // Inline code
+                text = text.replace(/\n/g, '<br>'); // Convert newlines to <br> for display
+
+                messageElement.innerHTML = text; // Use innerHTML *after* sanitization/markdown conversion
+            } else if (sender === 'error') {
+                messageElement.classList.add('error-message');
+                messageElement.textContent = `حدث خطأ: ${text}`;
+            }
+
+            chatHistory.appendChild(messageElement);
+            scrollToBottom();
+            return messageElement;
+        }
+
+        // Function to show/hide typing indicator
+        function showTypingIndicator(show) {
+            if (show) {
+                 // Append the container to chat history to make it part of the scroll flow
+                 if (!typingIndicatorContainer.parentNode) {
+                     chatHistory.appendChild(typingIndicatorContainer);
+                 }
+                typingIndicatorContainer.style.display = 'block';
+                scrollToBottom();
+            } else {
+                 // Remove the container from the DOM when hiding
+                 if (typingIndicatorContainer.parentNode) {
+                     typingIndicatorContainer.parentNode.removeChild(typingIndicatorContainer);
+                 }
+                 typingIndicatorContainer.style.display = 'none';
+            }
+        }
+
+        // Function to send message to the AI
+        async function sendMessageToAI(userMessage) {
+            conversationHistory.push({ role: "user", content: userMessage });
+
+            showTypingIndicator(true);
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            sendButton.style.cursor = 'not-allowed';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo", // Consider gpt-4-turbo if available/needed
+                        messages: conversationHistory,
+                        temperature: 0.7,
+                        // max_tokens: 250 // Example limit
+                    })
+                });
+
+                showTypingIndicator(false); // Hide indicator before processing response
+
+                if (!response.ok) {
+                    let errorMsg = `فشل طلب الـ API برمز الحالة ${response.status}.`;
+                    try {
+                        const errorData = await response.json();
+                        console.error("API Error Details:", errorData);
+                        errorMsg += ` ${errorData.error?.message || 'تفاصيل غير متوفرة.'}`;
+                    } catch (e) {
+                        errorMsg += ` ${response.statusText || 'لا يمكن قراءة تفاصيل الخطأ.'}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+
+                if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+                    const aiResponse = data.choices[0].message.content.trim();
+                    conversationHistory.push({ role: "assistant", content: aiResponse });
+                    displayMessage('ai', aiResponse);
+                } else {
+                    console.error("Invalid response structure:", data);
+                    throw new Error("لم يتم العثور على رد صالح من الـ API.");
+                }
+
+            } catch (error) {
+                console.error("Error sending message:", error);
+                displayMessage('error', error.message || "حدث خطأ غير متوقع أثناء الاتصال بالخادم.");
+                // Remove the failed AI response placeholder from history if needed
+                // conversationHistory.pop(); // Remove the last 'assistant' entry attempt
+                 showTypingIndicator(false); // Ensure indicator is hidden on error
+            } finally {
+                 // Re-enable input slightly delayed for smoother feel
+                 setTimeout(() => {
+                    messageInput.disabled = false;
+                    sendButton.disabled = false;
+                    sendButton.style.cursor = 'pointer';
+                    messageInput.focus();
+                 }, 100); // 100ms delay
+            }
+        }
+
+        // Combined Send Function
+        function handleSend() {
+             const messageText = messageInput.value.trim();
+
+             // *** API Key Check - Modified ***
+             // Simple check: Is there *any* key starting with sk-?
+             const isApiKeyValid = API_KEY && API_KEY.startsWith("sk-");
+
+             if (messageText && isApiKeyValid) {
+                 displayMessage('user', messageText);
+                 sendMessageToAI(messageText);
+                 messageInput.value = ''; // Clear input field
+             } else if (!messageText) {
+                 // Add shake animation to input if empty
+                 messageInput.classList.add('shake-animation');
+                 setTimeout(() => { messageInput.classList.remove('shake-animation'); }, 400);
+                 messageInput.focus();
+             } else if (!isApiKeyValid) {
+                 // Display specific error if API key seems invalid
+                 displayMessage('error', 'مفتاح API غير صالح أو مفقود. يرجى التحقق من الكود.');
+                 console.error("API Key is missing or does not start with 'sk-'!");
+             }
+        }
+
+        // Event listener for the send button
+        sendButton.addEventListener('click', handleSend);
+
+        // Event listener for pressing Enter in the input field
+        messageInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) { // Send on Enter, allow Shift+Enter for newline
+                event.preventDefault();
+                handleSend(); // Use the combined send function
+            }
+        });
+
+        // Initial focus on the input field
+        messageInput.focus();
+
+        // Initial check on load for API key validity
+        if (!API_KEY || !API_KEY.startsWith("sk-")) {
+            console.warn("تنبيه: مفتاح API في الكود يبدو مفقودًا أو غير صالح (لا يبدأ بـ 'sk-'). قد لا تعمل الدردشة.");
+            // Optionally display a system message in chat on load
+            // setTimeout(() => displayMessage('error', 'تنبيه: مفتاح API غير مهيأ بشكل صحيح.'), 500);
+        }
+
+        // Add smooth scroll polyfill if needed (optional)
+        if (!('scrollBehavior' in document.documentElement.style)) {
+             // Consider adding a small polyfill library for older browsers
+             console.log("Browser does not natively support smooth scrolling.");
+        }
+
+    </script>
+
+</body>
+</html>
